@@ -67,11 +67,11 @@ const ProductGrid = ({ collection, productsPerPage, showTitle }) => {
   ) => {
     let unsorted = selection
 
-    if (unsorted && type === 'high-low') {
+    if (unsorted && type === 'low-high') {
       unsorted.sort(function (a, b) {
         return a.variants[0].price - b.variants[0].price
       })
-    } else if (unsorted && type === 'low-high') {
+    } else if (unsorted && type === 'high-low') {
       unsorted.sort(function (a, b) {
         return b.variants[0].price - a.variants[0].price
       })
