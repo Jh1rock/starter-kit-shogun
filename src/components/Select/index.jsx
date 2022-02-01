@@ -43,8 +43,8 @@ import { forwardRef, Select as ChakraSelect } from '@chakra-ui/react'
  * @param { SelectProps & ChakraSelectProps } props
  * @param { React.LegacyRef<HTMLSelectElement> } ref
  */
-const Select = ({ placeholder, options = [], onChange, ...rest }, ref) => (
-  <ChakraSelect ref={ref} placeholder={placeholder} onChange={onChange} {...rest}>
+const Select = ({ placeholder, value, options = [], onChange, ...rest }, ref) => (
+  <ChakraSelect ref={ref} placeholder={placeholder} value={value} onChange={onChange} {...rest}>
     {options.map(({ value, text }) => (
       <option key={`${value}-${text}`} value={value}>
         {text}

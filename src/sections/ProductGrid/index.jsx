@@ -33,9 +33,14 @@ import List from 'Components/List'
 import Pagination from 'Components/Pagination'
 import ProductGridItem from 'Components/ProductGridItem'
 import VisuallyHidden from 'Components/VisuallyHidden'
+import Select from 'Components/Select'
+import FormLabel from 'Components/FormLabel'
 
 /**
  * @typedef { import("lib/types").Collection } Collection
+ * @typedef { import('Components/Select').SelectOption }  SelectOption
+ * @typedef { import('Components/Hooks').ShopifyProduct } ShopifyProduct
+ * @typedef { import('Components/Hooks').BigCommerceProduct } BigCommerceProduct
  * @typedef {{
  *  collection?: Collection
  *  productsPerPage?: number
@@ -52,19 +57,42 @@ const ProductGrid = ({ collection, productsPerPage, showTitle }) => {
     query: { page: urlCurrentPage },
   } = router
   const { trackProductListImpressionsEvent } = useGoogleTagManagerActions()
-  const { products: apiProducts, name } = collection || {}
+  let { products: apiProducts, name } = collection || {}
   const currentPage =
     urlCurrentPage && !Array.isArray(urlCurrentPage) ? parseInt(urlCurrentPage) : 1
+
+  const handleSort = (
+    /** @type {String} */ type,
+    /** @type {any[] | ShopifyProduct[] | BigCommerceProduct[] | undefined} */ selection,
+  ) => {
+    let unsorted = selection
+
+    if (unsorted && type === 'high-low') {
+      unsorted.sort(function (a, b) {
+        return a.variants[0].price - b.variants[0].price
+      })
+    } else if (unsorted && type === 'low-high') {
+      unsorted.sort(function (a, b) {
+        return b.variants[0].price - a.variants[0].price
+      })
+    } else if (unsorted && type === 'relevance') {
+    }
+
+    return unsorted
+  }
+
+  const [currentSort, setSort] = React.useState({ sort: 'relevance' })
 
   const [products, totalPages] = React.useMemo(() => {
     if (!apiProducts) return []
     if (!productsPerPage) return [apiProducts]
+    handleSort(currentSort.sort, apiProducts)
     const currentPaginationStart = (currentPage - 1) * productsPerPage
     const currentPaginationEnd = currentPage * productsPerPage
     const totalPages = Math.ceil(apiProducts.length / productsPerPage)
 
     return [apiProducts.slice(currentPaginationStart, currentPaginationEnd), totalPages]
-  }, [apiProducts, currentPage, productsPerPage])
+  }, [apiProducts, currentPage, productsPerPage, currentSort])
 
   React.useEffect(() => {
     if (!products || products.length === 0) return
@@ -78,6 +106,12 @@ const ProductGrid = ({ collection, productsPerPage, showTitle }) => {
     push({ pathname, query: { page: page.toString() } }, undefined, { shallow: true })
   }
 
+  /** @type { SelectOption[] } */ const sortOptions = [
+    { text: 'Relevance', value: 'relevance' },
+    { text: '$$$ Low - High', value: 'low-high' },
+    { text: '$$$ High - Low', value: 'high-low' },
+  ]
+
   return (
     <Container mx="auto" as="section" variant="section-wrapper" mt={8}>
       {showTitle ? (
@@ -87,6 +121,14 @@ const ProductGrid = ({ collection, productsPerPage, showTitle }) => {
       ) : (
         <VisuallyHidden as="h2">{name}</VisuallyHidden>
       )}
+      <FormLabel textTransform="capitalize">Sort By</FormLabel>
+      <Select
+        options={sortOptions}
+        defaultValue={sortOptions[0].value}
+        onChange={e => {
+          setSort({ sort: e.target.value })
+        }}
+      />
       <Grid
         as={List}
         templateColumns={{
